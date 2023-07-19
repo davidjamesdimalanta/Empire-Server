@@ -1,6 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 require('dotenv').config();
 
+
 const express = require('express');
 const cors = require('cors');
 
@@ -11,6 +12,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 async function connectToCluster(uri) {
+  const uri = process.env.DB_URI;
   let mongoClient;
 
   try {
