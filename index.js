@@ -12,7 +12,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 async function connectToCluster(uri) {
-  const uri = process.env.DB_URI;
   let mongoClient;
 
   try {
