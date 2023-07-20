@@ -31,8 +31,6 @@ async function createIntakeFormDocument(collection, formData) {
   const intakeFormDocument = {
     ...formData,
     dob: new Date(formData.dob),
-    phone: new Number(formData.phone),
-    contactPhone: new Number(formData.contactPhone),
   };
 
   try {
