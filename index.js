@@ -1,9 +1,9 @@
-const MongoClient = require('mongodb').MongoClient;
-require('dotenv').config();
-
-
 const express = require('express');
 const cors = require('cors');
+const MongoClient = require('mongodb').MongoClient;
+require('dotenv').config();
+const https = require('https');
+const fs = require('fs');
 
 const app = express();
 
@@ -75,11 +75,16 @@ app.use((req, res, next) => {
 });
 
 // Specify the PORT
-const PORT = process.env.PORT || 3000;
+const PORT = 443;
+
+// SSL options
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/api.empirehsi.com/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/api.empirehsi.com/fullchain.pem')
+};
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+https.createServer(options, app).listen(PORT, () => {
+  console.log(`Server running on https://localhost:${PORT}`);
   console.log('Server started successfully!');
 });
-
