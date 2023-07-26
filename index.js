@@ -47,12 +47,29 @@ async function executeIntakeFormCrudOperations(formData) {
 
   try {
     mongoClient = await connectToCluster(uri);
-    const db = mongoClient.db('Cluster0');  // replace 'Cluster0' with your database name
-    const collection = db.collection('intakeforms'); // replace 'intakeforms' with your collection name
+    const db = mongoClient.db('Cluster0');  
+    const collection = db.collection('intakeforms'); 
 
     console.log('CREATE IntakeForm');
     const result = await createIntakeFormDocument(collection, formData);
     return result;
+  } finally {
+    await mongoClient.close();
+  }
+}
+
+async function fetchIntakeFormDocuments() {
+  const uri = process.env.DB_URI;
+  let mongoClient;
+
+  try {
+    mongoClient = await connectToCluster(uri);
+    const db = mongoClient.db('Cluster0');  
+    const collection = db.collection('intakeforms'); 
+
+    console.log('FETCH IntakeForms');
+    const documents = await collection.find({}).toArray();
+    return documents;
   } finally {
     await mongoClient.close();
   }
@@ -68,6 +85,17 @@ app.post('/', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
+
+// GET endpoint
+app.get('/data', async (req, res) => {
+  try {
+    const documents = await fetchIntakeFormDocuments();
+    res.status(200).json(documents);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+});
+
 
 // Catch 404
 app.use((req, res, next) => {
