@@ -4,6 +4,9 @@ const MongoClient = require('mongodb').MongoClient;
 require('dotenv').config();
 const https = require('https');
 const fs = require('fs');
+const {OAuth2Client} = require('google-auth-library');
+const CLIENT_ID = '642009559167-c21bbmjospif4mljqli2klp02lrd2vq2.apps.googleusercontent.com';
+const client = new OAuth2Client(CLIENT_ID);
 
 const app = express();
 
@@ -87,7 +90,7 @@ app.post('/', async (req, res) => {
 });
 
 // GET endpoint
-app.get('/data', async (req, res) => {
+app.get('/data', async (res) => {
   try {
     const documents = await fetchIntakeFormDocuments();
     res.status(200).json(documents);
@@ -116,3 +119,40 @@ https.createServer(options, app).listen(PORT, () => {
   console.log(`Server running on https://localhost:${PORT}`);
   console.log('Server started successfully!');
 });
+
+app.post('/api/v1/auth/google', async (req, res) => {
+  try {
+    const { token }  = req.body;
+  
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const userid = payload['sub'];
+  
+    const userEmail = payload['email'];
+    const userDomain = userEmail.split('@')[1];
+
+    const allowedDomains = ['q-globalmgmt.com', 'empirehsi.com'];
+
+    if (!allowedDomains.includes(userDomain)) {
+      return res.status(403).json({ message: 'The domain of your Google account is not allowed.' });
+    }
+
+    let user = await UserService.getUserByGoogleId(userid);
+
+    if (!user) {
+      user = await UserService.createUser({ googleId: userid, email: userEmail });
+    }
+
+    const jwtToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  
+    res.json({ token: jwtToken });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+});
+
+
