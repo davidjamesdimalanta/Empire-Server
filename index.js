@@ -4,8 +4,10 @@ const MongoClient = require('mongodb').MongoClient;
 require('dotenv').config();
 const https = require('https');
 const fs = require('fs');
-const {OAuth2Client} = require('google-auth-library');
-const CLIENT_ID = '642009559167-c21bbmjospif4mljqli2klp02lrd2vq2.apps.googleusercontent.com';
+const { OAuth2Client } = require('google-auth-library');
+const jwt = require('jsonwebtoken');
+
+const CLIENT_ID = process.env.CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
 
 const app = express();
@@ -15,18 +17,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 async function connectToCluster(uri) {
-  let mongoClient;
-
   try {
-    mongoClient = new MongoClient(uri);
+    const mongoClient = new MongoClient(uri);
     console.log('Connecting to MongoDB Atlas cluster...');
     await mongoClient.connect();
     console.log('Successfully connected to MongoDB Atlas!');
-
     return mongoClient;
   } catch (error) {
     console.error('Connection to MongoDB Atlas failed!', error);
-    process.exit();
+    throw error;
   }
 }
 
@@ -40,18 +39,17 @@ async function createIntakeFormDocument(collection, formData) {
     const result = await collection.insertOne(intakeFormDocument);
     return result;
   } catch (error) {
-    throw new Error('Failed to insert document');
+    throw new Error(`Failed to insert document: ${error.message}`);
   }
 }
 
 async function executeIntakeFormCrudOperations(formData) {
   const uri = process.env.DB_URI;
-  let mongoClient;
+  const mongoClient = await connectToCluster(uri);
 
   try {
-    mongoClient = await connectToCluster(uri);
-    const db = mongoClient.db('Cluster0');  
-    const collection = db.collection('intakeforms'); 
+    const db = mongoClient.db('Cluster0');
+    const collection = db.collection('intakeforms');
 
     console.log('CREATE IntakeForm');
     const result = await createIntakeFormDocument(collection, formData);
@@ -63,12 +61,11 @@ async function executeIntakeFormCrudOperations(formData) {
 
 async function fetchIntakeFormDocuments() {
   const uri = process.env.DB_URI;
-  let mongoClient;
+  const mongoClient = await connectToCluster(uri);
 
   try {
-    mongoClient = await connectToCluster(uri);
-    const db = mongoClient.db('Cluster0');  
-    const collection = db.collection('intakeforms'); 
+    const db = mongoClient.db('Cluster0');
+    const collection = db.collection('intakeforms');
 
     console.log('FETCH IntakeForms');
     const documents = await collection.find({}).toArray();
@@ -80,7 +77,6 @@ async function fetchIntakeFormDocuments() {
 
 // POST endpoint
 app.post('/', async (req, res) => {
-  // process the data
   try {
     const result = await executeIntakeFormCrudOperations(req.body);
     res.status(200).json({ message: 'Form successfully submitted', result });
@@ -90,7 +86,7 @@ app.post('/', async (req, res) => {
 });
 
 // GET endpoint
-app.get('/data', async (res) => {
+app.get('/data', async (req, res) => {
   try {
     const documents = await fetchIntakeFormDocuments();
     res.status(200).json(documents);
@@ -99,31 +95,36 @@ app.get('/data', async (res) => {
   }
 });
 
-
 // Catch 404
 app.use((req, res, next) => {
   res.status(404).json({ message: "Not found" });
 });
 
 // Specify the PORT
-const PORT = 443;
+const PORT = process.env.PORT || 443;
 
 // SSL options
 const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/api.empirehsi.com/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/api.empirehsi.com/fullchain.pem')
+  key: fs.readFileSync(process.env.SSL_KEY_PATH),
+  cert: fs.readFileSync(process.env.SSL_CERT_PATH)
 };
 
 // Start the server
-https.createServer(options, app).listen(PORT, () => {
-  console.log(`Server running on https://localhost:${PORT}`);
-  console.log('Server started successfully!');
-});
+try {
+  https.createServer(options, app).listen(PORT, () => {
+    console.log(`Server running on https://localhost:${PORT}`);
+    console.log('Server started successfully!');
+  });
+} catch (error) {
+  console.error('Failed to create HTTPS server!', error);
+  process.exit(1);
+}
 
+// Google Authentication
 app.post('/api/v1/auth/google', async (req, res) => {
   try {
-    const { token }  = req.body;
-  
+    const { token } = req.body;
+
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: CLIENT_ID,
@@ -131,7 +132,7 @@ app.post('/api/v1/auth/google', async (req, res) => {
 
     const payload = ticket.getPayload();
     const userid = payload['sub'];
-  
+
     const userEmail = payload['email'];
     const userDomain = userEmail.split('@')[1];
 
@@ -141,6 +142,7 @@ app.post('/api/v1/auth/google', async (req, res) => {
       return res.status(403).json({ message: 'The domain of your Google account is not allowed.' });
     }
 
+    // UserService is missing or not imported properly
     let user = await UserService.getUserByGoogleId(userid);
 
     if (!user) {
@@ -148,11 +150,22 @@ app.post('/api/v1/auth/google', async (req, res) => {
     }
 
     const jwtToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  
+
     res.json({ token: jwtToken });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
-
+// Validate and sanitize req.body data **WIP**
+app.use((req, res, next) => {
+  if (req.body) {
+    // Validate and sanitize req.body data here
+    // Example: 
+    // req.body = sanitize(req.body);
+    // if (!validate(req.body)) {
+    //   return res.status(400).json({ message: 'Invalid request body' });
+    // }
+  }
+  next();
+});
