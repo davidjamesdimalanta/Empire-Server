@@ -29,7 +29,7 @@ async function uploadImageToSpaces(file) {
   const fileContent = await fs.promises.readFile(file.path);
 
   const params = {
-    Bucket: process.env.DO_SPACES_NAME,
+    Bucket: "intakeformimages",
     Key: file.filename, // File name you want to save as in S3
     Body: fileContent,
     ACL: 'public-read', // Makes sure file is public
