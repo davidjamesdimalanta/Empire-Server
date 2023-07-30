@@ -20,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //AWS (DO upload)
 const s3 = new S3({
+  region: 'nyc3',
   endpoint: process.env.DO_SPACES_ENDPOINT,
   credentials: {
     accessKeyId: process.env.DO_SPACES_ACCESS_KEY,
