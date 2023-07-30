@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //AWS (DO upload)
 const s3 = new S3({
-  endpoint: 'https://intakeformimages.nyc3.digitaloceanspaces.com',
+  endpoint: process.env.DO_SPACES_ENDPOINT,
   credentials: {
     accessKeyId: process.env.DO_SPACES_ACCESS_KEY,
     secretAccessKey: process.env.DO_SPACES_SECRET_KEY,
