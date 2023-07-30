@@ -6,7 +6,7 @@ const https = require('https');
 const fs = require('fs');
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
-const AWS = require('aws-sdk');
+const { S3 } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -19,10 +19,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //AWS (DO upload)
-const s3 = new AWS.S3({
-  endpoint: process.env.DO_SPACES_ENDPOINT,
-  accessKeyId: process.env.DO_SPACES_ACCESS_KEY,
-  secretAccessKey: process.env.DO_SPACES_SECRET_KEY,
+const s3 = new S3({
+  region: 'nyc3', // bucket region
+  credentials: {
+    accessKeyId: process.env.DO_SPACES_ACCESS_KEY,
+    secretAccessKey: process.env.DO_SPACES_SECRET_KEY,
+  },
 });
 
 async function uploadImageToSpaces(file) {
@@ -36,7 +38,7 @@ async function uploadImageToSpaces(file) {
   };
 
   try {
-    const data = await s3.upload(params).promise();
+    const data = await s3.putObject(params);
     
     await fs.promises.unlink(file.path); // Deletes the local file
 
