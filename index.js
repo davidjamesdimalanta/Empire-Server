@@ -20,7 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 
 //AWS (DO upload)
 const s3 = new S3({
-  region: 'nyc3', // bucket region
+  endpoint: 'https://intakeformimages.nyc3.digitaloceanspaces.com',
   credentials: {
     accessKeyId: process.env.DO_SPACES_ACCESS_KEY,
     secretAccessKey: process.env.DO_SPACES_SECRET_KEY,
@@ -31,7 +31,7 @@ async function uploadImageToSpaces(file) {
   const fileContent = await fs.promises.readFile(file.path);
 
   const params = {
-    Bucket: "intakeformimages",
+    Bucket: 'intakeformimages',
     Key: file.filename, // File name you want to save as in S3
     Body: fileContent,
     ACL: 'public-read', // Makes sure file is public
