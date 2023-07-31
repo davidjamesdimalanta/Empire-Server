@@ -30,6 +30,7 @@ const s3 = new S3({
 
 // Upload and Read img URL
 async function uploadImageToSpaces(file) {
+  console.log(file.path)
   const fileContent = await fs.promises.readFile(file.path);
 
   const params = {
@@ -74,6 +75,7 @@ async function createIntakeFormDocument(collection, formData) {
 
   try {
     const result = await collection.insertOne(intakeFormDocument);
+    console.log(result)
     return result;
   } catch (error) {
     throw new Error(`Failed to insert document: ${error.message}`);
@@ -114,8 +116,9 @@ async function fetchIntakeFormDocuments() {
 }
 
 // POST endpoint
-app.post('/', upload.fields([{name:'photoId'}, {name:'medsList'}]), async (req, res) => {
+app.post('/', upload.fields([{name:'photoId', maxCount: 1 }, {name:'medsList', maxCount: 1}]), async (req, res) => {
   try {
+    console.log(req.files)
     const imageUrlPhotoId = await uploadImageToSpaces(req.files.photoId[0]);
     console.log('imageUrlPhotoId:', imageUrlPhotoId);
     const imageUrlMedsList = await uploadImageToSpaces(req.files.medsList[0]);
