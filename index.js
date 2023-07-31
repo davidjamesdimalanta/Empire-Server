@@ -35,22 +35,46 @@ async function uploadImageToSpaces(file) {
 
   const params = {
     Bucket: 'intakeformimages',
-    Key: file.filename, // File name you want to save as in S3
+    Key: file.filename, // File name to save as in S3
     Body: fileContent,
     ACL: 'public-read', // Makes sure file is public
   };
 
   try {
-    const data = await s3.putObject(params);
-    
+    await s3.putObject(params); 
+    console.log('File uploaded successfully');
+
+    // Construct the file URL
+    const fileUrl = `https://${params.Bucket}.${s3.config.endpoint}/${params.Key}`;
+
     await fs.promises.unlink(file.path); // Deletes the local file
 
-    return data.Location; // Returns the URL of the uploaded file
+    return fileUrl; // Returns the URL of the uploaded file
   } catch (error) {
     console.log('Error in uploading file: ', error);
     throw error;
   }
 }
+
+// POST endpoint
+app.post('/', upload.fields([{name:'photoId', maxCount: 1 }, {name:'medsList', maxCount: 1}]), async (req, res) => {
+  try {
+    console.log(req.files)
+    const imageUrlPhotoId = await uploadImageToSpaces(req.files.photoId[0]);
+    console.log('imageUrlPhotoId:', imageUrlPhotoId);
+    const imageUrlMedsList = await uploadImageToSpaces(req.files.medsList[0]);
+    console.log('imageUrlMedsList:', imageUrlMedsList);
+
+    let formData = { ...req.body };
+    formData.photoIdUrl = imageUrlPhotoId;
+    formData.medsListUrl = imageUrlMedsList;
+
+    const result = await executeIntakeFormCrudOperations(formData);
+    res.status(200).json({ message: 'Form successfully submitted', result });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+});
 
 // connect to mongoDB
 async function connectToCluster(uri) {
@@ -114,26 +138,6 @@ async function fetchIntakeFormDocuments() {
     await mongoClient.close();
   }
 }
-
-// POST endpoint
-app.post('/', upload.fields([{name:'photoId', maxCount: 1 }, {name:'medsList', maxCount: 1}]), async (req, res) => {
-  try {
-    console.log(req.files)
-    const imageUrlPhotoId = await uploadImageToSpaces(req.files.photoId[0]);
-    console.log('imageUrlPhotoId:', imageUrlPhotoId);
-    const imageUrlMedsList = await uploadImageToSpaces(req.files.medsList[0]);
-    console.log('imageUrlMedsList:', imageUrlMedsList);
-
-    let formData = { ...req.body };
-    formData.photoIdUrl = imageUrlPhotoId;
-    formData.medsListUrl = imageUrlMedsList;
-
-    const result = await executeIntakeFormCrudOperations(formData);
-    res.status(200).json({ message: 'Form successfully submitted', result });
-  } catch (error) {
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
-  }
-});
 
 // GET endpoint
 app.get('/data', async (req, res) => {
