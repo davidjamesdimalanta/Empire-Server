@@ -45,7 +45,7 @@ async function uploadImageToSpaces(file) {
     console.log('File uploaded successfully');
 
     // Construct the file URL
-    const fileUrl = `https://${params.Bucket}.${s3.config.endpoint}/${params.Key}`;
+    const fileUrl = `https://${params.Bucket}.nyc3.digitaloceanspaces.com/${params.Key}`;
 
     await fs.promises.unlink(file.path); // Deletes the local file
 
