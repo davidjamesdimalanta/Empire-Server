@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//AWS (DO upload)
+//Connect to DO Bucket
 const s3 = new S3({
   region: 'nyc3',
   endpoint: process.env.DO_SPACES_ENDPOINT,
@@ -28,6 +28,7 @@ const s3 = new S3({
   },
 });
 
+// Upload and Read img URL
 async function uploadImageToSpaces(file) {
   const fileContent = await fs.promises.readFile(file.path);
 
@@ -116,7 +117,9 @@ async function fetchIntakeFormDocuments() {
 app.post('/', upload.fields([{name:'photoId'}, {name:'medsList'}]), async (req, res) => {
   try {
     const imageUrlPhotoId = await uploadImageToSpaces(req.files.photoId[0]);
+    console.log('imageUrlPhotoId:', imageUrlPhotoId);
     const imageUrlMedsList = await uploadImageToSpaces(req.files.medsList[0]);
+    console.log('imageUrlMedsList:', imageUrlMedsList);
 
     let formData = { ...req.body };
     formData.photoIdUrl = imageUrlPhotoId;
