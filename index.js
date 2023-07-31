@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 //Connect to DO Bucket
 const s3 = new S3({
   region: 'nyc3',
-  endpoint: process.env.DO_SPACES_ENDPOINT,
+  endpoint: 'https://nyc3.digitaloceanspaces.com',
   credentials: {
     accessKeyId: process.env.DO_SPACES_ACCESS_KEY,
     secretAccessKey: process.env.DO_SPACES_SECRET_KEY,
