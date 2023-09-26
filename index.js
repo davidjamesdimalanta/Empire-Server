@@ -222,26 +222,19 @@ app.post('/api/v1/auth/google', async (req, res) => {
     return 1400;
   };
   
-  app.post("/create-payment-intent", async (req, res) => {
-    try {
-        console.log("Received request for /create-payment-intent");
-        const { items } = req.body;
-      
-        // Create a PaymentIntent with the order amount and currency
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: calculateOrderAmount(items),
-          currency: "usd",
-          // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
-          automatic_payment_methods: {
-            enabled: true,
-          },
-        });
+  app.post('/create-checkout-session', async (req, res) => {
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+          price: '{{pr_1234}}',
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${YOUR_DOMAIN}?success=true`,
+      cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+    });
   
-        res.send({
-          clientSecret: paymentIntent.client_secret,
-        });
-  }
-  catch (error) {
-    console.error("Error processing payment:", error.message);
-        res.status(500).send({ message: "Internal Server Error" });
-  }});
+    res.redirect(303, session.url);
+  });
