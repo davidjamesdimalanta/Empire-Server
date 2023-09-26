@@ -11,11 +11,12 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const CLIENT_ID = process.env.CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
-const stripe = require("stripe")('sk_test_51NmKckLq2OP5B9FXdMADFY7Y3V317ktn77v3U1T5qtj7dfT9CqEUa2W7yofOm2SVYwy3wQeCm1moznRJgs34so6500LFNQtsUl');
+const stripe = require("stripe")("sk_test_51NmKckLq2OP5B9FXdMADFY7Y3V317ktn77v3U1T5qtj7dfT9CqEUa2W7yofOm2SVYwy3wQeCm1moznRJgs34so6500LFNQtsUl");
 const app = express();
 
 // CORS
 app.use(cors());
+app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
