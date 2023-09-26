@@ -11,7 +11,7 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const CLIENT_ID = process.env.CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
-const stripe = require("stripe")('sk_test_Hrs6SAopgFPF0bZXSN3f6ELN');
+const stripe = require("stripe")('sk_test_51NmKckLq2OP5B9FXdMADFY7Y3V317ktn77v3U1T5qtj7dfT9CqEUa2W7yofOm2SVYwy3wQeCm1moznRJgs34so6500LFNQtsUl');
 const app = express();
 
 // CORS
@@ -159,6 +159,7 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 443;
 
 // SSL options
+
 const options = {
   key: fs.readFileSync(process.env.SSL_KEY_PATH),
   cert: fs.readFileSync(process.env.SSL_CERT_PATH)
@@ -221,6 +222,7 @@ app.post('/api/v1/auth/google', async (req, res) => {
   };
   
   app.post("/create-payment-intent", async (req, res) => {
+    console.log("Received request for /create-payment-intent");
     const { items } = req.body;
   
     // Create a PaymentIntent with the order amount and currency
