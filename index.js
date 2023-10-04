@@ -226,8 +226,7 @@ app.post('/api/v1/auth/google', async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
-          // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
-          price: '{{pr_1234}}',
+          price: 'price_1NxHitLq2OP5B9FXzD61pMQq',
           quantity: 1,
         },
       ],
@@ -235,6 +234,7 @@ app.post('/api/v1/auth/google', async (req, res) => {
       success_url: `${YOUR_DOMAIN}?success=true`,
       cancel_url: `${YOUR_DOMAIN}?canceled=true`,
     });
+  
   
     res.redirect(303, session.url);
   });
