@@ -215,26 +215,38 @@ app.post('/api/v1/auth/google', async (req, res) => {
 });
 
   // Stripe Payment**
-  const calculateOrderAmount = (items) => {
-    // Replace this constant with a calculation of the order's amount
-    // Calculate the order total on the server to prevent
-    // people from directly manipulating the amount on the client
-    return 1400;
-  };
-  
-  app.post('/create-checkout-session', async (req, res) => {
-    const session = await stripe.checkout.sessions.create({
-      line_items: [
-        {
-          price: 'price_1NxHitLq2OP5B9FXzD61pMQq',
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${YOUR_DOMAIN}?success=true`,
-      cancel_url: `${YOUR_DOMAIN}?canceled=true`,
-    });
-  
-  
-    res.redirect(303, session.url);
-  });
+const calculateOrderAmount = (items) => {
+  console.log("Calculating order amount...");
+  // Replace this constant with a calculation of the order's amount
+  // Calculate the order total on the server to prevent
+  // people from directly manipulating the amount on the client
+  return 1400;
+};
+
+app.post('/create-checkout-session', async (req, res) => {
+  console.log("Received request for creating checkout session...");
+
+  try {
+      const orderAmount = calculateOrderAmount(req.body.items); // Assuming items are sent in the request body
+      console.log(`Order amount calculated: ${orderAmount}`);
+
+      const session = await stripe.checkout.sessions.create({
+          line_items: [
+              {
+                  price: 'price_1NxHitLq2OP5B9FXzD61pMQq',
+                  quantity: 1,
+              },
+          ],
+          mode: 'payment',
+          success_url: `${YOUR_DOMAIN}?success=true`,
+          cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+      });
+
+      console.log("Checkout session created successfully, redirecting...");
+
+      res.redirect(303, session.url);
+  } catch (error) {
+      console.error("Error while creating checkout session:", error);
+      res.status(500).send({ error: "Failed to create checkout session" });
+  }
+});
