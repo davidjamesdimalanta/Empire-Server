@@ -223,8 +223,8 @@ const calculateOrderAmount = (items) => {
   return 1400;
 };
 
-app.post('/create-checkout-session', async (req, res) => {
-  console.log("Received request for creating checkout session...");
+app.post('/create-payment-intent', async (req, res) => {
+  console.log("Received request for creating payment intent...");
 
   try {
       const orderAmount = calculateOrderAmount(req.body.items); // Assuming items are sent in the request body
@@ -242,11 +242,11 @@ app.post('/create-checkout-session', async (req, res) => {
           cancel_url: `${YOUR_DOMAIN}?canceled=true`,
       });
 
-      console.log("Checkout session created successfully, redirecting...");
+      console.log("Payment intent created successfully, redirecting...");
 
       res.redirect(303, session.url);
   } catch (error) {
-      console.error("Error while creating checkout session:", error);
-      res.status(500).send({ error: "Failed to create checkout session" });
+      console.error("Error while creating payment intent:", error);
+      res.status(500).send({ error: "Failed to create payment intent" });
   }
 });
