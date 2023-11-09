@@ -11,7 +11,6 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const CLIENT_ID = process.env.CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
-const stripe = require("stripe")("sk_test_51NmKckLq2OP5B9FXdMADFY7Y3V317ktn77v3U1T5qtj7dfT9CqEUa2W7yofOm2SVYwy3wQeCm1moznRJgs34so6500LFNQtsUl");
 const app = express();
 
 // CORS
@@ -214,39 +213,3 @@ app.post('/api/v1/auth/google', async (req, res) => {
   }
 });
 
-  // Stripe Payment**
-const calculateOrderAmount = (items) => {
-  console.log("Calculating order amount...");
-  // Replace this constant with a calculation of the order's amount
-  // Calculate the order total on the server to prevent
-  // people from directly manipulating the amount on the client
-  return 1400;
-};
-
-app.post('/create-payment-intent', async (req, res) => {
-  console.log("Received request for creating payment intent...");
-
-  try {
-      const orderAmount = calculateOrderAmount(req.body.items); // Assuming items are sent in the request body
-      console.log(`Order amount calculated: ${orderAmount}`);
-
-      const session = await stripe.checkout.sessions.create({
-          line_items: [
-              {
-                  price: 'price_1NxHitLq2OP5B9FXzD61pMQq',
-                  quantity: 1,
-              },
-          ],
-          mode: 'payment',
-          success_url: `${YOUR_DOMAIN}?success=true`,
-          cancel_url: `${YOUR_DOMAIN}?canceled=true`,
-      });
-
-      console.log("Payment intent created successfully, redirecting...");
-
-      res.redirect(303, session.url);
-  } catch (error) {
-      console.error("Error while creating payment intent:", error);
-      res.status(500).send({ error: "Failed to create payment intent" });
-  }
-});
